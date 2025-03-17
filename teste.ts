@@ -1,35 +1,40 @@
-interface Iuser {
-    id: number;
-    name: string;
-    email: string;
-}
+import path from "path"
 
-abstract class teste {
-    teste: string;
+// interface Iuser {
+//     id: number;
+//     name: string;
+//     email: string;
+// }
 
-    constructor(teste: string){
-        this.teste = teste
-    }
+// abstract class teste {
+//     teste: string;
 
-    getTeste(){}
-}
+//     constructor(teste: string){
+//         this.teste = teste
+//     }
 
-class User implements Iuser {
-    id: number;
-    name: string;
-    email: string;
+//     getTeste(){}
+// }
 
-    constructor(id: number , name: string, email: string){
-        this.id = id;
-        this.name = name;
-        this.email = email;
-    }
+// class User implements Iuser {
+//     id: number;
+//     name: string;
+//     email: string;
 
-    getUser(){
-        console.log(this.id, this.name, this.email)
-    }
-}
+//     constructor(id: number , name: string, email: string){
+//         this.id = id;
+//         this.name = name;
+//         this.email = email;
+//     }
 
-const user1 = new User(123, 'felipe', 'felipe@gmail.com');
+//     getUser(){
+//         console.log(this.id, this.name, this.email)
+//     }
+// }
 
-user1.getUser()
+// const user1 = new User(123, 'felipe', 'felipe@gmail.com');
+
+// user1.getUser()
+
+const dir = path.join(__dirname, __filename);
+console.log(dir)

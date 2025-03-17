@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS Migrations (
+    migration_id SERIAL PRIMARY KEY,
+    migration_name VARCHAR(30) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
