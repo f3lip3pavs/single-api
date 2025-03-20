@@ -1,40 +1,12 @@
-import path from "path"
+import { Email } from "./src/models/type-objects/Email";
+import { Password } from "./src/models/type-objects/Password";
+import { Value } from "./src/models/type-objects/Value";
 
-// interface Iuser {
-//     id: number;
-//     name: string;
-//     email: string;
-// }
+const password = new Password("12345678")
+const email = new Email("felipepavan@gmail.com.br");
+const value = new Value('59.99')
 
-// abstract class teste {
-//     teste: string;
 
-//     constructor(teste: string){
-//         this.teste = teste
-//     }
-
-//     getTeste(){}
-// }
-
-// class User implements Iuser {
-//     id: number;
-//     name: string;
-//     email: string;
-
-//     constructor(id: number , name: string, email: string){
-//         this.id = id;
-//         this.name = name;
-//         this.email = email;
-//     }
-
-//     getUser(){
-//         console.log(this.id, this.name, this.email)
-//     }
-// }
-
-// const user1 = new User(123, 'felipe', 'felipe@gmail.com');
-
-// user1.getUser()
-
-const dir = path.join(__dirname, __filename);
-console.log(dir)
+console.log(email.getEmail())
+console.log(password.getPassword())
+console.log(value.getValue())
