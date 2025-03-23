@@ -1,12 +1,10 @@
-import { Email } from "./src/models/type-objects/Email";
-import { Password } from "./src/models/type-objects/Password";
-import { Value } from "./src/models/type-objects/Value";
+import { getToken } from "./src/services/payment-service";
 
-const password = new Password("12345678")
-const email = new Email("felipepavan@gmail.com.br");
-const value = new Value('59.99')
+interface token {
+    access_token: string,
+    token_type: string,
+    expires_in: string,
+    scope: string
+};
 
-
-console.log(email.getEmail())
-console.log(password.getPassword())
-console.log(value.getValue())
+getToken().then(res => console.log(res))
