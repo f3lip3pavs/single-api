@@ -1,4 +1,4 @@
-import { Value } from "../type-objects/Value";
+import { Value } from "../classes/Value";
 
 export interface IProduct {
     title : string;

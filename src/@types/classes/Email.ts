@@ -9,13 +9,13 @@ export class Email {
         const isValid : boolean = /^[a-z.0-9]+[@][a-z]+\.[a-z]{2,}(\.[a-z]{2,})?$/i.test(email)
 
         if(!isValid){
-            throw error({error: "Invalid email"});
+            throw new Error("Invalid email");
         }
         
         this.email = email;
     }
 
-    public getEmail() : string | undefined {
+    public value() : string {
         return this.email;
     }
 }

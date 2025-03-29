@@ -1,10 +1,7 @@
-import { getToken } from "./src/services/payment-service";
+import { Password } from "./src/@types/classes/Password";
 
-interface token {
-    access_token: string,
-    token_type: string,
-    expires_in: string,
-    scope: string
-};
+let pass = new Password("56765495");
 
-getToken().then(res => console.log(res))
+let word = pass.getPassword()
+
+console.log(word)
