@@ -23,109 +23,97 @@ O progresso do desenvolvimento está documentado no artigo:
 
 Lá, compartilho os desafios enfrentados, as decisões tomadas (como a escolha do banco de dados e tecnologias utilizadas) e detalhes sobre a implementação. Este README será atualizado regularmente com os avanços mais recentes publicados no artigo.
 
-# 🔄 Última atualização: 17 de Março
+# **🔄** 24 de Março
 
-### ✔️ Feito:
-- Concluí a função migration
+---
 
-### ⚠️ Dificuldades:
+### ✅ Feito:
 
-- sigo sem conseguir o comportamento que preciso, que é um retorno vazio ou 0;
-- Erros no código SQL;
-- Função de timestamp;
+- Middleware de autenticação com Json Web Token;
+- Crei as duas primeiras rotas para teste
 
-Como sugeri anteriormente, testar outra estrutura de loop realmente teve um efeito positivo no código e fez funcionar como o esperado. Eu utilizei um for() loop comum. Isso resolveu o problema de conseguir o retorno vazio ou não vazio que eu precisava para validar se a migration ja estava registrada na tabela.
+### **⚠️** Dificuldades:
 
-Aqui esta o trecho do codigo que foi alterado de map() para for():
+- Por conta da tipagem, o Middleware não se conportava da maneira certa. Consiguir adicionar novos parametros no objeto Request demorou banstante, o retorno da função estava errado tbm, precisa ser void. e o problema de passar process.env.SECRET_KEY na função sign.
+- realizar requisição do tipo get. Por algum motivo não esta funcionando (aparentemete, precisa reiniciar o servidor)
+
+Bom, para começar, vamos entender como funciona a autenticação JWT no contexto dessa aplicação: De forma simples, o JWT é enciptação de um objeto json. Ele permite que as informações chave/valor, que no padrão JWT são chamadas de claims, de um json sejam transmitidas via HTTP. Para mais informações veja a [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519) que apresenta a documentação completa do Json Web Token  
+
+Um JWT tem o seguinte formato: (Header.Payload.Signature)
+
+`eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9`.`eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ`.`dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk`
+
+Uma requisição de autenticação é feita para o servido, onde as credencias serão verificadas. Após a verificação, caso seja bem sucedida, um objeto json contendo as informações senciveis que os serviços irão precisar é encriptado usando o algoritmo de encriptamento HS256 (pode ser usado o padrão RSA256 tbm), transformando o objeto json em um token JWT. 
+
+![image.png](attachment:c4128559-3b46-4912-b247-13b36c328379:image.png)
+
+Após obter o token JWT, as requisições serão feitas passando o token no header da requisição. Ao chegar no servidor, o token é desencriptado devolvendo um objeto json, e dessa forma os serviços conseguem acessar dados sensiveis como um id de usuario.
+
+![image.png](attachment:48eaed66-bd30-464c-8697-38ec3a629664:image.png)
+
+Para construir o middleware de autenticação, enfreitei um problema meio chato. A minha ideia era receber o token JWT no meu middleware, desencriptalo, obter os dados da usuario em um json e repasar esses dados para o proximo middleware pela requisição. Mas a interface Request do Express, não possui um atributo como “userid” ou “username”, ou seja, preciso criar esses parametros, mas como?
+
+A principio, eu pensei em estendar a interface Request e adicionar os parametros que eu precisava:
 
 ```tsx
-for(i=0; i<SQLfiles.length;i++){
-            
-        //busca o arquivo na tabela migration
-        console.log("current file: ", [SQLfiles[i]]);
-        let result = await pool.query("SELECT migration_name FROM Migrations WHERE migration_name = $1", [SQLfiles[i]]);
-        
-        //verifica se o arquivo existe
-        if(result.rows.length == 0){
+import Request from 'express'
 
-            //retorna o caminho para o arquivo
-            let filePath = path.join(migrationDir, SQLfiles[i]);
-            console.log("file path to insert: ", filePath)
-            
-            //le o arquivo
-            let sql = fs.readFileSync(filePath, 'utf8');
-            console.log("data file: ", sql)
-            
-            //exucuta o arquivo sql
-            await pool.query(sql);
-            await pool.query("INSERT INTO Migrations (migration_name) VALUES ($1)", [SQLfiles[i]]);
-        }
+interface IRequest extends Request {
+	userid: string,
+	username: string
+}
+```
+
+E isso funciona! Mas, eu descobri que é possivel adicionar atributos diremente em uma interface através do `namespace`. Para isso, é necessario declarar `global` , o namespace em si e a interface:
+
+```tsx
+import Request from 'express'
+
+declare global {
+	namespace Express{
+		interface IRequest extends Request {
+			userid: string,
+			username: string
+		}
+	}
+}
+
+```
+
+Dessa forma os atributos userid e username são adicionados em Request, o que eu achei incrivel, pois permite continuar usarndo o type Request no projeto inteiro. E devemos ter atenção! O arquivo onde esse codigo fica declarado, deve ser renomeado com a estenção .d.ts, que são arquivos para definição de tipos do typescript. Chamei esse arquivo de “express.d.ts”, não é o melhor nome, mas não consegui pensar em nada melhor na hora.
+
+Dessa forma, a função ficou assim: (A função não vai ficar assim, mas essa é uma forma de entender o funcionamento dela como um todo)
+
+```tsx
+export function authenticator(req: Request, res: Response, next: NextFunction) : void {
+    //const key : any = process.env.SECRET_KEY; usar de exemplo no artigo
+
+    const token : string = sign({mock: "id"}, process.env.SECRET_KEY as string, {expiresIn: "1h"});
+
+    try{
+        const decoded : JwtPayload | string = verify(token, process.env.SECRET_KEY as string);
+    
+        req.userid = decoded;
+        res.send({message: req.userid})
         
-        console.log('migration completed successfully')
+        next()
+    }catch{
+        res.send()
     }
-})
+}
 ```
 
-Aparentemente o map() estava passando por todos índices do array ‘SQLfiles’ sem conseguir executar a 5º linha a tempo, mesmo que o callback passado para a função map() fosse assíncrono. Mas, com a estrutura for() o comportamento seguiu como esperado.
+Tem dois detalhes aqui que tbm são importantes: O middleware sermpre deve ser uma função sem retorno do tipo void. E eu tbm estava com problemas para declarar `process.env.SECRET_KEY`. Apesar do segundo paremetro da função sign aceitar um string `process.env.SECRET_KEY` ser um string, a função não estava aceitando, então tentei resolver o problema declarando a SECRET_KEY dentro de uma variavel com o tipo any e passando essa variavel como parametro da função 
 
-Alguns erros no código SQL também surgiram durante o processo, mas a maioria eram erros de sintaxe que são facilmente resolvidos com um pouco de logica. Porem, dois erros interessantes se destacam e vale a pena descreve-los: 
+`const key : any = process.env.SECRET_KEY` . Mas tinha um jeito muito mais simples que era fazendo um casting declarando `process.env.SECRET_KEY` como uma string: 
 
-- Ordem de execução dos arquivos sql;
-- Atualização em tempo real no banco de dados;
+`process.env.SECRET_KEY as string`
 
-### Ordem de execução dos arquivos sql
+<aside>
+🧃
 
-Me deparei com um problema, que olhando agora parece obvio e simples, mas é muito importante ser esclarecido. É importante ficar atento a ordem de execução dos arquivos SQL, pois se você tentar executar um arquivo que possui uma chave estrangeira que ainda não foi criada, isso vai retornar um erro, vou usar como exemplo o caso que aconteceu comigo:
+## Juice
 
-Se eu tentar executar esse arquivo, antes de criar as tabelas Users e Products, me retornara um erro por conta das lihas “user_id INT REFERENCES Users(user_id)” e “product_id INT REFERENCES Products(product_id)”
+`Adicionar propriedades em uma interface existente`  `casting de dados`
 
-```sql
-CREATE TABLE IF NOT EXISTS Orders (
-    order_id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES Users(user_id),
-    product_id INT REFERENCES Products(product_id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-O correto é criar as tabelas Users e Products antes de Orders:
-
-```sql
-CREATE TABLE IF NOT EXISTS Users (
-    user_id SERIAL PRIMARY KEY,
-    user_name VARCHAR(50) NOT NULL UNIQUE,
-    user_password VARCHAR(255) NOT NULL,
-    img BYTEA,
-    email VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-```sql
-CREATE TABLE IF NOT EXISTS Products (
-    product_id SERIAL PRIMARY KEY,
-    title VARCHAR(100) NOT NULL,
-    product_value DECIMAL(12,2) NOT NULL,
-    amount INT NOT NULL,
-    product_description VARCHAR(1000) NOT NULL,
-    img BYTEA NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-Por esse motivo criei um método para organizar os arquivos, com certeza deve existir uma forma melhor de fazer isso, mas como eu precisava de algo fácil, simples e rápido, serviu para mim. Sempre antes do nome dos arquivos SQL, eu coloquei um código, em que os primeiros dígitos  representam a ordem em que deve ser executado e o segundo a versão. No momento meu código está assim:
-
-```
-src/
-	database/
-		migrations/
-			01_Migration.sql
-			11_Users.sql
-			21_Products.sql
-			31_Order.sql
-		migrations.ts
-```
-
-Como expliquei antes, o primeiro digito representa a ordem em que será executado. O arquivo 01_Migration.sql recebe o código 01, em que o numero mais a esquerda (0) coloca esse arquivo em primeiro lugar na fila de execução, ou seja, no código 11 o numero mais a esquerda é o 1, e por isso será executado após o 0, e assim por diante.
-
-Os novos códigos que forem criados para atualizar tabelas ou outras informações no banco de dados,  deveram estar em arquivos separados, logo, uma mesma tabela pode ter vários arquivos que a atualizam. Por esse motivo, o segundo numero mais a direita representa a versão do código, ou seja, o arquivo 21_products.sql é a primeira versão (1). Caso seja feita alguma atualização nessa tabela, como adicionar uma coluna, deletar uma coluna, etc, o numero mais a direita (1) deverá ser incrementado em 1, no caso, ficaria 22_Products.sql.
+</aside>
