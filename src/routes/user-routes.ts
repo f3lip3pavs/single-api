@@ -3,12 +3,23 @@ import { Router } from "express";
 import {UserController} from '../controllers/user-controller';
 
 const route : Router = Router()
-//sinup user
 
+//sinup user
 route.post('/', UserController.create);
 
-//singin user
+
 //update user
+route.patch("/", UserController.update);
+
 //get user
+route.get("/", UserController.getAll);
+
+//delete user
+route.delete("/:id", UserController.delete);
+
+//get user by id
+route.get("/:id", UserController.getById);
+
+//singin user
 
 export default route;

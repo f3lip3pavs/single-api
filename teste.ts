@@ -1,4 +1,4 @@
-import { Password } from "./src/@types/classes/Password";
+import { Password } from "./src/@domain/classes/Password";
 
 let pass = new Password("56765495");
 

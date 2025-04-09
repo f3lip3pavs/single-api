@@ -1,6 +1,6 @@
 import { IUser } from "../interfaces/IUser";
-import { Password } from "./Password";
-import { Email } from "./Email";
+import  {Password}  from "../../@domain/classes/Password";
+import { Email } from "../../@domain/classes/Email";
 
 export class User implements IUser {
     readonly name : string;
