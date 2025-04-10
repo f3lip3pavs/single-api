@@ -1,6 +1,5 @@
 import { Pool, QueryResult } from "pg";
 import { IUser } from "../@domain/interfaces/IUser";
-import { Email } from "../@domain/classes/Email";
 
 export class UserModel {
 
@@ -22,8 +21,9 @@ export class UserModel {
         };
     };
 
-    public async update(user: IUser, id:number) : Promise<QueryResult> {
+    public async update(user: IUser, id:string) : Promise<QueryResult> {
         const {name, user_password, img} = user;
+        const userID = Number(id);
 
         const data = [];
 
@@ -41,7 +41,7 @@ export class UserModel {
 
         try {
             const query = `UPDATE Users SET ${data[0]} = $1 WHERE user_id = $2`;
-            return this.pool.query(query, [data[1], id]);
+            return this.pool.query(query, [data[1], userID]);
         } catch (err) {
             throw Error(`Error in class UserModel: ${err instanceof Error ? err.message : "Unknown error"}`);
         }

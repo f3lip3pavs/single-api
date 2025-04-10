@@ -29,16 +29,16 @@ O progresso do desenvolvimento está documentado no artigo:
 
 Lá, compartilho os desafios enfrentados, as decisões tomadas (como a escolha do banco de dados e tecnologias utilizadas) e detalhes sobre a implementação. Este README será atualizado regularmente com os avanços mais recentes publicados no artigo.
 
-# **🔄 9** de Abril
+# **🔄 10** de Abril
 
 ---
 
 ### ✅ Feito:
 
-- Finalizei quase todas as rotas de usuarios
+- finalizei a rota e o controller de autenticação
 
 ### **⚠️** Dificuldades:
 
-- nenhuma
+- quase nenhuma
 
-Ficou faltando apenas a rota que autentica um usario
+A rota esta autenticando um usuario, mas falta criar um token para esse usuario. Apos isso, tbm será necessario modificar as rotasde usuario para usar o token de autenticação.

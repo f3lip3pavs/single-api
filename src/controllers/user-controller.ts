@@ -33,7 +33,7 @@ export class UserController {
     public static async update(req: Request, res: Response): Promise<void> {
         
         try {
-            const response = await userModel.update(req.body, 1);
+            const response = await userModel.update(req.body, req.params.id);
             res.send({message: response});
         } catch (err) {
             if(err instanceof Error){

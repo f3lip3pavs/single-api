@@ -9,7 +9,7 @@ route.post('/', UserController.create);
 
 
 //update user
-route.patch("/", UserController.update);
+route.patch("/:id", UserController.update);
 
 //get user
 route.get("/", UserController.getAll);
